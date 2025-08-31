@@ -12,6 +12,7 @@ RM := rm -rf
 -include Drivers/STM32F1xx_HAL_Driver/Src/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/display/subdir.mk
+-include Core/Src/HC_SR04/subdir.mk
 -include Core/Src/subdir.mk
 -include objects.mk
 
@@ -61,8 +62,8 @@ all: main-build
 main-build: HC_SR04_Ultrasonic_Sensing.elf secondary-outputs
 
 # Tool invocations
-HC_SR04_Ultrasonic_Sensing.elf HC_SR04_Ultrasonic_Sensing.map: $(OBJS) $(USER_OBJS) C:\stm32Projects\HC_SR04_Ultrasonic_Sensing\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "HC_SR04_Ultrasonic_Sensing.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\stm32Projects\HC_SR04_Ultrasonic_Sensing\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="HC_SR04_Ultrasonic_Sensing.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+HC_SR04_Ultrasonic_Sensing.elf HC_SR04_Ultrasonic_Sensing.map: $(OBJS) $(USER_OBJS) C:\LocalProject\HomeWelcomer\HC_SR04_Ultrasonic_Sensing\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "HC_SR04_Ultrasonic_Sensing.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\LocalProject\HomeWelcomer\HC_SR04_Ultrasonic_Sensing\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="HC_SR04_Ultrasonic_Sensing.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

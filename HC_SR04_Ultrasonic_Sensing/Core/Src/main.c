@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "oled_display.h"
+#include "hc_sr04.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,8 +59,6 @@ static void MX_I2C1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-static inline void DWT_Delay_Init(void);
-static inline void delay_us(uint32_t us);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -101,8 +100,8 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   oled_init();
-  DWT_Delay_Init();
-  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
+  HC_SR04_Init();
+
 
   distance_update_flag = 0;
   /* USER CODE END 2 */
@@ -115,17 +114,18 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  //trigger signal
-	  HAL_GPIO_WritePin(GPIOA,GPIO_PIN_12,GPIO_PIN_SET);
-	  delay_us(10);
-	  HAL_GPIO_WritePin(GPIOA,GPIO_PIN_12,GPIO_PIN_RESET);
+	  HC_SR04_Trigger(); // trigger the HC_SR04 chip
 
-	  if(distance_update_flag)
-	  {
-		  distance_update_flag = 0;
-		  distance = (pulse_us+1) * 340/20000U; //distance calculated in cm 325cm & 280cm
+	  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1); // activate the interrupt for the falling edge of the echo wave
 
-	  }
-	  oled_display_wavelength_and_distance(pulse_us, distance);
+	  while(!distance_update_flag); // wait the measure to be done
+	  distance_update_flag = 0; // reset the flag for next run
+
+	  HAL_TIM_IC_Stop_IT(&htim2, TIM_CHANNEL_1);
+
+	  distance = HC_SR04_Distance_Calculate(pulse_us); //distance calculated in cm 325cm & 280cm
+	  oled_display_wavelength_and_distance(pulse_us, distance); // update oled
+
 	  HAL_Delay(60);
   }
   /* USER CODE END 3 */
@@ -365,16 +365,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-static inline void DWT_Delay_Init(void){
-    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-    DWT->CYCCNT = 0;
-    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-}
-static inline void delay_us(uint32_t us){
-    uint32_t start = DWT->CYCCNT;
-    uint32_t ticks = us * (SystemCoreClock/1000000U);
-    while ((DWT->CYCCNT - start) < ticks);
-}
 /* USER CODE END 4 */
 
 /**

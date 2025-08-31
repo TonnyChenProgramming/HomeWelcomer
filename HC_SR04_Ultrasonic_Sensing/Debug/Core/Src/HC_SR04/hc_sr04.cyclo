@@ -1,0 +1,5 @@
+../Core/Src/HC_SR04/hc_sr04.c:6:6:HC_SR04_Init	1
+../Core/Src/HC_SR04/hc_sr04.c:11:6:HC_SR04_Trigger	1
+../Core/Src/HC_SR04/hc_sr04.c:18:10:HC_SR04_Distance_Calculate	1
+../Core/Src/HC_SR04/hc_sr04.c:23:20:DWT_Delay_Init	1
+../Core/Src/HC_SR04/hc_sr04.c:29:20:delay_us	2

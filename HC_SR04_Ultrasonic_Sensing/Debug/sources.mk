@@ -22,6 +22,7 @@ C_DEPS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
+Core/Src/HC_SR04 \
 Core/Src/display \
 Core/Src \
 Core/Startup \
