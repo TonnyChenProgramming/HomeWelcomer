@@ -139,10 +139,12 @@ int main(void)
   	  // 1.prepare to stop
 
   	  HAL_RTC_GetTime(&hrtc,&this_rtc_alarm.AlarmTime ,RTC_FORMAT_BIN);
-  	  // this code can cause minutes update issue, but As I just want to wake up the system
-  	  //every 2 seconds, if you want to keep track of the time, please be weary of it
-  	  this_rtc_alarm.AlarmTime.Seconds =(this_rtc_alarm.AlarmTime.Seconds+2)%60;
-
+  	  if (this_rtc_alarm.AlarmTime.Seconds >= 58) {
+  		  this_rtc_alarm.AlarmTime.Seconds = 0;
+  	      this_rtc_alarm.AlarmTime.Minutes = (this_rtc_alarm.AlarmTime.Minutes + 1) % 60;
+  	  } else {
+  		  this_rtc_alarm.AlarmTime.Seconds += 2;
+  	  }
 
   	  HAL_RTC_SetAlarm_IT(&hrtc,&this_rtc_alarm,RTC_FORMAT_BIN);
 
