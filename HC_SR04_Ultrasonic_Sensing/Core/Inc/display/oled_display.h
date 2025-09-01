@@ -6,6 +6,7 @@
 // Function prototypes
 void oled_init(void);
 
-void oled_display_wavelength_and_distance(int wavelength, int distance);
+void oled_display_wavelength_distance_rtc(int wavelength, int distance, uint32_t rtc);
 
 #endif /* OLED_DISPLAY_H */
+

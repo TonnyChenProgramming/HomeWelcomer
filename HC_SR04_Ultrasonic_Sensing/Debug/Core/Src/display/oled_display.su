@@ -1,2 +1,2 @@
 ../Core/Src/display/oled_display.c:9:6:oled_init	8	static
-../Core/Src/display/oled_display.c:14:6:oled_display_wavelength_and_distance	56	static
+../Core/Src/display/oled_display.c:14:6:oled_display_wavelength_distance_rtc	64	static

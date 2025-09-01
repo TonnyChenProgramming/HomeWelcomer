@@ -43,6 +43,8 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
+RTC_HandleTypeDef hrtc;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 
@@ -50,6 +52,9 @@ TIM_HandleTypeDef htim2;
 uint32_t pulse_us;
 uint8_t distance_update_flag;
 uint16_t distance;
+RTC_TimeTypeDef this_type = {0};
+RTC_AlarmTypeDef this_rtc_alarm = {0};
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,6 +63,7 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
 
@@ -98,6 +104,7 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
   oled_init();
   HC_SR04_Init();
@@ -109,25 +116,48 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
-    /* USER CODE END WHILE */
+    {
+      /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
-	  //trigger signal
-	  HC_SR04_Trigger(); // trigger the HC_SR04 chip
+      /* USER CODE BEGIN 3 */
+  	  //trigger signal
+  	  HC_SR04_Trigger(); // trigger the HC_SR04 chip
 
-	  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1); // activate the interrupt for the falling edge of the echo wave
+  	  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1); // activate the interrupt for the falling edge of the echo wave
 
-	  while(!distance_update_flag); // wait the measure to be done
-	  distance_update_flag = 0; // reset the flag for next run
+  	  while(!distance_update_flag); // wait the measure to be done
+  	  distance_update_flag = 0; // reset the flag for next run
 
-	  HAL_TIM_IC_Stop_IT(&htim2, TIM_CHANNEL_1);
+  	  HAL_TIM_IC_Stop_IT(&htim2, TIM_CHANNEL_1);
 
-	  distance = HC_SR04_Distance_Calculate(pulse_us); //distance calculated in cm 325cm & 280cm
-	  oled_display_wavelength_and_distance(pulse_us, distance); // update oled
+  	  distance = HC_SR04_Distance_Calculate(pulse_us); //distance calculated in cm 325cm & 280cm
 
-	  HAL_Delay(60);
-  }
+  	  HAL_RTC_GetTime(&hrtc,&this_type,RTC_FORMAT_BIN);
+  	  oled_display_wavelength_distance_rtc(pulse_us, distance, this_type.Seconds); // update oled
+
+  	  // entering the sleep mode
+  	  // 1.prepare to stop
+
+  	  HAL_RTC_GetTime(&hrtc,&this_rtc_alarm.AlarmTime ,RTC_FORMAT_BIN);
+  	  // this code can cause minutes update issue, but As I just want to wake up the system
+  	  //every 2 seconds, if you want to keep track of the time, please be weary of it
+  	  this_rtc_alarm.AlarmTime.Seconds =(this_rtc_alarm.AlarmTime.Seconds+2)%60;
+
+
+  	  HAL_RTC_SetAlarm_IT(&hrtc,&this_rtc_alarm,RTC_FORMAT_BIN);
+
+  	  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
+  	  HAL_SuspendTick();
+  	  // 2. Enter STOP mode (system is off here until interrupt)
+  	  HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
+  	  // 3.wake up the system and do the work
+  	  SystemClock_Config();
+  	  HAL_ResumeTick();
+  	  HAL_RTC_DeactivateAlarm(&hrtc,RTC_ALARM_A);
+
+  /* USER CODE BEGIN 3 */
+    }
+
   /* USER CODE END 3 */
 }
 
@@ -139,13 +169,15 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
@@ -165,6 +197,12 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
   }
@@ -201,6 +239,37 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+
+  /** Initialize RTC Only
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.AsynchPrediv = RTC_AUTO_1_SECOND;
+  hrtc.Init.OutPut = RTC_OUTPUTSOURCE_ALARM;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
 
 }
 
