@@ -11,7 +11,7 @@ void oled_init(void) {
 }
 
 
-void oled_display_wavelength_and_distance(int wavelength, int distance)
+void oled_display_wavelength_distance_rtc(int wavelength, int distance, uint32_t rtc)
 {
     char buffer[30];
     ssd1306_Fill(Black);
@@ -22,6 +22,10 @@ void oled_display_wavelength_and_distance(int wavelength, int distance)
 
     ssd1306_SetCursor(2, 12);
     sprintf(buffer, "distance: %d cm", distance);      // use %% to print literal '%'
+    ssd1306_WriteString(buffer, Font_6x8, White);
+
+    ssd1306_SetCursor(2, 22);
+    sprintf(buffer, "rtc: %ld ", rtc);      // use %% to print literal '%'
     ssd1306_WriteString(buffer, Font_6x8, White);
 
     ssd1306_UpdateScreen();

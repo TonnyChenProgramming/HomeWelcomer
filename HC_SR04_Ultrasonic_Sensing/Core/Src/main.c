@@ -51,6 +51,8 @@ TIM_HandleTypeDef htim2;
 uint32_t pulse_us;
 uint8_t distance_update_flag;
 uint16_t distance;
+RTC_TimeTypeDef this_type = {0};
+RTC_AlarmTypeDef this_rtc_alarm = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -111,34 +113,48 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
-    /* USER CODE END WHILE */
+    {
+      /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
-	  //trigger signal
-	  HC_SR04_Trigger(); // trigger the HC_SR04 chip
+      /* USER CODE BEGIN 3 */
+  	  //trigger signal
+  	  HC_SR04_Trigger(); // trigger the HC_SR04 chip
 
-	  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1); // activate the interrupt for the falling edge of the echo wave
+  	  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1); // activate the interrupt for the falling edge of the echo wave
 
-	  //while(!distance_update_flag); // wait the measure to be done
-	  distance_update_flag = 0; // reset the flag for next run
+  	  //while(!distance_update_flag); // wait the measure to be done
+  	  distance_update_flag = 0; // reset the flag for next run
 
-	  HAL_TIM_IC_Stop_IT(&htim2, TIM_CHANNEL_1);
+  	  HAL_TIM_IC_Stop_IT(&htim2, TIM_CHANNEL_1);
 
-	  distance = HC_SR04_Distance_Calculate(pulse_us); //distance calculated in cm 325cm & 280cm
-	  oled_display_wavelength_and_distance(pulse_us, distance); // update oled
+  	  distance = HC_SR04_Distance_Calculate(pulse_us); //distance calculated in cm 325cm & 280cm
 
-	  // 1.prepare to stop
+  	  HAL_RTC_GetTime(&hrtc,&this_type,RTC_FORMAT_BIN);
+  	  oled_display_wavelength_distance_rtc(pulse_us, distance, this_type.Seconds); // update oled
+
+  	  // entering the sleep mode
+  	  // 1.prepare to stop
+
+  	  HAL_RTC_GetTime(&hrtc,&this_rtc_alarm.AlarmTime ,RTC_FORMAT_BIN);
+  	  // this code can cause minutes update issue, but As I just want to wake up the system
+  	  //every 2 seconds, if you want to keep track of the time, please be weary of it
+  	  this_rtc_alarm.AlarmTime.Seconds =(this_rtc_alarm.AlarmTime.Seconds+2)%60;
 
 
-	  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
-	  HAL_SuspendTick();
-	  // 2. Enter STOP mode (system is off here until interrupt)
-	  HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
-	  // 3.wake up the system and do the work
-	  SystemClock_Config();
-	  HAL_ResumeTick();
-  }
+  	  HAL_RTC_SetAlarm_IT(&hrtc,&this_rtc_alarm,RTC_FORMAT_BIN);
+
+  	  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
+  	  HAL_SuspendTick();
+  	  // 2. Enter STOP mode (system is off here until interrupt)
+  	  HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
+  	  // 3.wake up the system and do the work
+  	  SystemClock_Config();
+  	  HAL_ResumeTick();
+  	  HAL_RTC_DeactivateAlarm(&hrtc,RTC_ALARM_A);
+
+
+    }
+
   /* USER CODE END 3 */
 }
 
