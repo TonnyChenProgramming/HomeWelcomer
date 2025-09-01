@@ -59,7 +59,7 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_RTC_Init(void);
-static inline void RTC_ArmAlarm_Plus2s(void);
+
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
 
@@ -120,7 +120,7 @@ int main(void)
 
 	  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1); // activate the interrupt for the falling edge of the echo wave
 
-	  while(!distance_update_flag); // wait the measure to be done
+	  //while(!distance_update_flag); // wait the measure to be done
 	  distance_update_flag = 0; // reset the flag for next run
 
 	  HAL_TIM_IC_Stop_IT(&htim2, TIM_CHANNEL_1);
@@ -129,7 +129,8 @@ int main(void)
 	  oled_display_wavelength_and_distance(pulse_us, distance); // update oled
 
 	  // 1.prepare to stop
-	  RTC_ArmAlarm_Plus2s();
+
+
 	  __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
 	  HAL_SuspendTick();
 	  // 2. Enter STOP mode (system is off here until interrupt)
@@ -364,15 +365,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-static inline void RTC_ArmAlarm_Plus2s(void){
-  uint32_t now = HAL_RTC_GetCounter(&hrtc);
 
-  __HAL_RTC_ALARM_DISABLE_IT(&hrtc, RTC_IT_ALR);     // avoid spurious while editing
-  __HAL_RTC_ALARM_CLEAR_FLAG(&hrtc, RTC_FLAG_ALRAF); // clear old alarm
-  HAL_RTC_SetAlarm(&hrtc, (now + 2) & 0xFFFFF);
-  __HAL_RTC_ALARM_ENABLE_IT(&hrtc, RTC_IT_ALR);      // (re)enable alarm irq
-  __HAL_RTC_ALARM_EXTI_CLEAR_FLAG();                 // clear EXTI17 pending
-}
 /* USER CODE END 4 */
 
 /**
