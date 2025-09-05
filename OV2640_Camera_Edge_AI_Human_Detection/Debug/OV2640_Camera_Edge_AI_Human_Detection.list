@@ -29,17 +29,17 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  12 .debug_rnglists 00000472  00000000  00000000  0000b818  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_macro  00034422  00000000  00000000  0000bc8a  2**0
+ 13 .debug_macro  00034469  00000000  00000000  0000bc8a  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_line   00007a62  00000000  00000000  000400ac  2**0
+ 14 .debug_line   000073e4  00000000  00000000  000400f3  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_str    0014d91e  00000000  00000000  00047b0e  2**0
+ 15 .debug_str    0014da52  00000000  00000000  000474d7  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .comment      00000043  00000000  00000000  0019542c  2**0
+ 16 .comment      00000043  00000000  00000000  00194f29  2**0
                   CONTENTS, READONLY
- 17 .debug_frame  000016ec  00000000  00000000  00195470  2**2
+ 17 .debug_frame  000016ec  00000000  00000000  00194f6c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_line_str 00000065  00000000  00000000  00196b5c  2**0
+ 18 .debug_line_str 0000006e  00000000  00000000  00196658  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -4662,6 +4662,8 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  8001c4a:	693b      	ldr	r3, [r7, #16]
  8001c4c:	2b00      	cmp	r3, #0
  8001c4e:	f000 80e1 	beq.w	8001e14 <HAL_RCC_GetSysClockFreq+0x2b8>
+      {
+        switch (pllsource)
  8001c52:	697b      	ldr	r3, [r7, #20]
  8001c54:	2b02      	cmp	r3, #2
  8001c56:	f000 8083 	beq.w	8001d60 <HAL_RCC_GetSysClockFreq+0x204>
@@ -4675,8 +4677,6 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  8001c6a:	2b01      	cmp	r3, #1
  8001c6c:	d056      	beq.n	8001d1c <HAL_RCC_GetSysClockFreq+0x1c0>
  8001c6e:	e099      	b.n	8001da4 <HAL_RCC_GetSysClockFreq+0x248>
-      {
-        switch (pllsource)
         {
           case RCC_PLLSOURCE_HSI:  /* HSI used as PLL clock source */
 
